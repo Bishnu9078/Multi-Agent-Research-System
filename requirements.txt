@@ -1,0 +1,28 @@
+
+# LangChain Framework and LCEL
+langchain
+langchain-core
+langchain-community
+langchain-text-splitters
+
+# Agent Orchestration
+langgraph
+
+# Groq LLM Integration
+langchain-groq
+
+# Tavily Search Tool
+langchain-tavily
+tavily-python
+
+# BeautifulSoup Web Scraping
+beautifulsoup4
+requests
+lxml
+
+# Environment Variables and Data Validation
+python-dotenv
+pydantic
+
+# HTTP and Async Requests
+httpx
