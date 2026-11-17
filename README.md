@@ -1,6 +1,6 @@
 # Multi-Agent Research System (Backend)
 
-A Python backend that searches the live web with Tavily, reads selected source pages, writes a sourced report with Groq, and asks a critic chain to review and score it. The pipeline is exposed as a Python function and a command-line entry point; it has no frontend dependency.
+A Python research system that searches the live web with Tavily, reads selected source pages, writes a sourced report with Groq, and asks a critic chain to review and score it. The pipeline is available as a Python function, a command-line entry point, and a FastAPI-served HTML/CSS/JavaScript interface.
 
 The search and reader agents use LangChain's tool-calling agent loop (ReAct-style). The report writer and critic are LCEL pipelines composed from prompts, the Groq chat model, and string output parsers. Tavily provides search results; BeautifulSoup extracts readable text from selected pages.
 
@@ -71,6 +71,19 @@ print(result["sources"])
 ```
 
 The returned dictionary contains `topic`, `search_results`, `scraped_content`, `report`, `feedback`, `score`, `sources`, and `warnings`. Missing API keys and stage failures raise clear configuration or pipeline exceptions.
+
+## Run the web UI
+
+Install the dependencies if you have not already, then start the local FastAPI server:
+
+```powershell
+python -m pip install -r requirements.txt
+python -m uvicorn UI:app --reload
+```
+
+Open <http://127.0.0.1:8000>. The interface calls `POST /api/research` and displays the report, critic score and feedback, source snippets, extracted page text, and pipeline warnings. The `/health` endpoint returns the local server status. API keys remain in the Python process and are never sent to the browser.
+
+The static interface files are `static/index.html`, `static/css/styles.css`, and `static/js/app.js`.
 
 ## Run the search tool by itself
 

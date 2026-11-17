@@ -87,6 +87,9 @@ def build_llm(settings: Settings | None = None) -> ChatGroq:
         model=settings.model_name,
         api_key=settings.groq_api_key,
         temperature=settings.temperature,
+        # Groq retries transient 429 rate limits; extra attempts help when a
+        # run reaches the per-minute token limit between pipeline stages.
+        max_retries=5,
     )
 
 
