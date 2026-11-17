@@ -54,6 +54,14 @@ Configuration values available in `.env.example`:
 | `MAX_PAGE_BYTES` | `2000000` | Maximum HTML bytes fetched per page; must be greater than 0 |
 | `MAX_PAGE_CHARS` | `8000` | Maximum extracted text characters per page; must be greater than 0 |
 
+## Research Topic Guidance
+
+A topic is required for every research run. It must contain at least one non-whitespace character after trimming and be no longer than 500 characters. This is the only topic-specific validation performed by the application.
+
+For more focused results, enter a clear research question or subject. Add a location, time period, population, or specific angle when it matters to your question. For example, instead of `air pollution`, you could ask `How does air pollution affect public health in India?` These extra details are recommendations, not required fields.
+
+No special template, topic category, citation format, or source URLs are required in the topic text. API keys belong in the server configuration described above, not in the research topic.
+
 ## Project Workflow
 
 ```mermaid
