@@ -1,47 +1,86 @@
-# Multi-Agent-Research-System
+# Multi-Agent Research System (Backend)
 
-This repository contains a Tavily web-search tool that can be used by a LangChain or LangGraph agent. It searches the web and returns up to five results with each result's title, URL, and a short content snippet.
+A Python backend that searches the live web with Tavily, reads selected source pages, writes a sourced report with Groq, and asks a critic chain to review and score it. The pipeline is exposed as a Python function and a command-line entry point; it has no frontend dependency.
+
+The search and reader agents use LangChain's tool-calling agent loop (ReAct-style). The report writer and critic are LCEL pipelines composed from prompts, the Groq chat model, and string output parsers. Tavily provides search results; BeautifulSoup extracts readable text from selected pages.
 
 ## Requirements
 
 - Python 3.10 or newer
+- A Groq API key
 - A Tavily API key
 
 ## Setup
 
-Create and activate a virtual environment, then install the project dependencies:
+From the project directory, create and activate a virtual environment, then install the dependencies:
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-Create a `.env` file in the project directory and add your Tavily key:
-
-```text
-TAVILY_API_KEY=your_tavily_api_key
-```
-
-Keep the `.env` file private. It is excluded from Git by `.gitignore`.
-
-## Run the search tool
-
-Run the included example search from a terminal:
+Create a local `.env` file from the example and add valid API keys:
 
 ```powershell
-python tools.py
+Copy-Item .env.example .env
 ```
 
-The script prints the search results to the terminal. You can also import and invoke the tool from Python:
+Set `GROQ_API_KEY` and `TAVILY_API_KEY` in `.env`. The remaining settings are optional:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `GROQ_MODEL` | `openai/gpt-oss-120b` | Groq chat model used by the agents and LCEL runnables |
+| `LLM_TEMPERATURE` | `0` | Model temperature, from 0 to 2 |
+| `MAX_SEARCH_RESULTS` | `5` | Search results to retrieve, from 1 to 10 |
+| `MAX_SCRAPED_PAGES` | `2` | Search result pages to read, from 1 to 5 |
+| `REQUEST_TIMEOUT` | `15` | Page request timeout in seconds |
+| `MAX_PAGE_BYTES` | `2000000` | Maximum HTML downloaded per page |
+| `MAX_PAGE_CHARS` | `8000` | Maximum extracted text retained per page |
+
+`.env` is excluded from Git. Do not commit API keys.
+
+## Run the full pipeline
+
+```powershell
+python pipeline.py "How are heat pumps changing home energy use?"
+```
+
+If you omit the topic, the CLI prompts for one:
+
+```powershell
+python pipeline.py
+```
+
+The pipeline runs four stages:
+
+1. The search agent retrieves current sources with Tavily.
+2. The reader agent scrapes selected result pages. If the agent does not call its tool, the backend tries direct page reading.
+3. The writer chain produces an introduction, key findings, conclusion, and a canonical source list.
+4. The critic chain reviews the report and returns a score and feedback.
+
+The backend returns stage data as a JSON-friendly dictionary, so another Python application can call it without invoking the CLI:
 
 ```python
-from tools import web_search
+from pipeline import run_research_pipeline
 
-results = web_search.invoke({"query": "recent advances in renewable energy"})
-print(results)
+result = run_research_pipeline("How are heat pumps changing home energy use?")
+print(result["report"])
+print(result["score"])
+print(result["sources"])
 ```
 
-## Dependencies
+The returned dictionary contains `topic`, `search_results`, `scraped_content`, `report`, `feedback`, `score`, `sources`, and `warnings`. Missing API keys and stage failures raise clear configuration or pipeline exceptions.
 
-Dependencies are listed in [requirements.txt](requirements.txt), including LangChain, LangGraph, Tavily, and `python-dotenv`.
+## Run the search tool by itself
+
+```powershell
+python tools.py "recent advances in renewable energy"
+```
+
+## Backend modules
+
+- `config.py` loads and validates environment settings.
+- `tools.py` provides Tavily search and bounded HTML extraction tools.
+- `agents.py` builds the search and reader agents plus writer and critic chains.
+- `pipeline.py` coordinates the workflow and exposes the backend function.

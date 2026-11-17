@@ -1,28 +1,13 @@
+# LangChain agent runtime (create_agent API)
+langchain>=1.0,<2.0
+langchain-core>=1.0,<2.0
+langgraph>=1.0,<2.0
 
-# LangChain Framework and LCEL
-langchain
-langchain-core
-langchain-community
-langchain-text-splitters
+# Groq chat model and Tavily web search
+langchain-groq>=1.0,<2.0
+tavily-python>=0.8,<1.0
 
-# Agent Orchestration
-langgraph
-
-# Groq LLM Integration
-langchain-groq
-
-# Tavily Search Tool
-langchain-tavily
-tavily-python
-
-# BeautifulSoup Web Scraping
-beautifulsoup4
-requests
-lxml
-
-# Environment Variables and Data Validation
-python-dotenv
-pydantic
-
-# HTTP and Async Requests
-httpx
+# HTML extraction and environment configuration
+beautifulsoup4>=4.12,<5.0
+requests>=2.31,<3.0
+python-dotenv>=1.0,<2.0
