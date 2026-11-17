@@ -1,4 +1,4 @@
-# Multi-Agent Research System
+# Multi-Agent-Research-System
 
 This repository contains a Tavily web-search tool that can be used by a LangChain or LangGraph agent. It searches the web and returns up to five results with each result's title, URL, and a short content snippet.
 
