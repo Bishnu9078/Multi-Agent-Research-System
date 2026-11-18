@@ -3,19 +3,29 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f4f6f2" />
+    <meta name="theme-color" content="#f6f7f3" />
     <meta
       name="description"
       content="A source-grounded research workspace powered by Tavily and Groq."
     />
-    <title>Fieldnote — Research Workspace</title>
-    <link rel="stylesheet" href="/static/css/styles.css" />
-    <script src="/static/js/app.js" defer></script>
+    <title>Multi-Agent Research System - Research Workspace</title>
+    <script>
+      try {
+        const savedTheme = localStorage.getItem("fieldnote-theme");
+        const systemPrefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+        document.documentElement.dataset.theme =
+          savedTheme === "dark" || (savedTheme !== "light" && systemPrefersDark) ? "dark" : "light";
+      } catch {
+        document.documentElement.dataset.theme = "light";
+      }
+    </script>
+    <link rel="stylesheet" href="/static/css/styles.css?v=brand-update-1" />
+    <script src="/static/js/app.js?v=dark-mode-2" defer></script>
   </head>
   <body>
     <div class="app-shell">
       <header class="topbar">
-        <a class="brand" href="/" aria-label="Fieldnote home">
+        <a class="brand" href="/" aria-label="Multi-Agent Research System home">
           <span class="brand-mark" aria-hidden="true">
             <svg viewBox="0 0 32 32" fill="none">
               <path d="M7 6.75h11.3a6.7 6.7 0 0 1 6.7 6.7v11.8H13.7A6.7 6.7 0 0 1 7 18.55V6.75Z" />
@@ -24,37 +34,38 @@
             </svg>
           </span>
           <span class="brand-copy">
-            <strong>Fieldnote</strong>
-            <small>RESEARCH WORKSPACE</small>
+            <strong>Multi-Agent Research System</strong>
           </span>
         </a>
-        <div class="topbar-status">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span>Research tools ready</span>
-        </div>
+        <button
+          class="theme-toggle"
+          id="theme-toggle"
+          type="button"
+          aria-label="Switch to dark mode"
+          aria-pressed="false"
+          title="Switch to dark mode"
+        >
+          <svg id="theme-icon" class="theme-icon" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+            <path d="M16.2 12.7A7 7 0 0 1 7.3 3.8a7.1 7.1 0 1 0 8.9 8.9Z" />
+          </svg>
+        </button>
       </header>
 
       <main>
         <section class="hero" aria-labelledby="page-title">
-          <div class="eyebrow"><span></span> MULTI-AGENT RESEARCH</div>
-          <h1 id="page-title">Turn a question into <em>evidence.</em></h1>
-          <p>
-            Search the web, read relevant sources, and get a reviewed report in
-            one place.
-          </p>
+          <div class="eyebrow">RESEARCH WORKSPACE</div>
+          <h1 id="page-title">Research a question.<br /><em>Get a clear report.</em></h1>
+          <p>Search the web, read source pages, and review the report in one place.</p>
         </section>
 
         <section class="research-card card" aria-labelledby="research-heading">
           <div class="card-heading">
-            <div class="step-icon" aria-hidden="true">01</div>
-            <div>
-              <p class="eyebrow card-eyebrow">START WITH A QUESTION</p>
-              <h2 id="research-heading">What would you like to research?</h2>
-            </div>
+            <p class="eyebrow card-eyebrow">NEW RESEARCH</p>
+            <h2 id="research-heading">What would you like to know?</h2>
           </div>
 
           <form id="research-form" novalidate>
-            <label class="sr-only" for="topic-input">Research topic</label>
+            <label class="input-label" for="topic-input">Research question</label>
             <textarea
               id="topic-input"
               name="topic"
@@ -65,25 +76,36 @@
               required
             ></textarea>
             <div class="input-footer">
-              <span id="input-hint">Be specific for more useful findings.</span>
+              <span id="input-hint">Add a location, timeframe, or point of view if it matters.</span>
               <span class="character-count"><span id="character-count">0</span> / 500</span>
             </div>
 
             <div class="form-actions">
               <button class="primary-button" id="submit-button" type="submit">
-                <span>Research topic</span>
+                <span>Generate report</span>
                 <svg viewBox="0 0 20 20" aria-hidden="true">
                   <path d="M3.5 10h12M10.5 4.5 16 10l-5.5 5.5" />
                 </svg>
               </button>
+              <p class="submit-note">Includes source links and a critic review.</p>
             </div>
           </form>
 
           <div class="suggestions" aria-label="Example research topics">
-            <span class="suggestions-label">TRY</span>
-            <button type="button" class="suggestion-chip" data-topic="How is air pollution affecting public health in India?">Air pollution in India</button>
-            <button type="button" class="suggestion-chip" data-topic="What are the latest advances in renewable energy storage?">Renewable energy storage</button>
-            <button type="button" class="suggestion-chip" data-topic="How are heat pumps changing home energy use?">Heat pumps</button>
+            <div class="suggestions-heading">
+              <span class="suggestions-label">TRY A SAMPLE QUESTION</span>
+            </div>
+            <div class="suggestion-grid">
+              <button type="button" class="suggestion-chip" data-topic="How is air pollution affecting public health in India?">
+                Air pollution and public health in India
+              </button>
+              <button type="button" class="suggestion-chip" data-topic="What are the latest advances in renewable energy storage?">
+                Recent advances in renewable energy storage
+              </button>
+              <button type="button" class="suggestion-chip" data-topic="How are heat pumps changing home energy use?">
+                How heat pumps affect home energy use
+              </button>
+            </div>
           </div>
         </section>
 
@@ -99,7 +121,7 @@
           <span class="spinner" aria-hidden="true"></span>
           <div>
             <strong>Research is in progress</strong>
-            <p>Searching sources, reading pages, writing, and reviewing. This can take a little while.</p>
+            <p>Searching, reading, writing, and reviewing. This can take a little while.</p>
           </div>
         </section>
 

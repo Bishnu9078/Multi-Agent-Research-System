@@ -10,8 +10,38 @@ const errorMessage = document.querySelector("#error-message");
 const resultsSection = document.querySelector("#results-section");
 const copyButton = document.querySelector("#copy-button");
 const downloadButton = document.querySelector("#download-button");
+const themeToggle = document.querySelector("#theme-toggle");
+const themeIcon = document.querySelector("#theme-icon");
+const themeIconPath = themeIcon.querySelector("path");
+const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+const moonIconPath = "M16.2 12.7A7 7 0 0 1 7.3 3.8a7.1 7.1 0 1 0 8.9 8.9Z";
+const sunIconPath = "M10 6.8a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 0 0 0-6.4M10 1.8v2m0 12.4v2m8.2-8.2h-2M3.8 10h-2m14-5.8-1.4 1.4m-8.8 8.8-1.4 1.4m11.6 0-1.4-1.4M5.6 5.6 4.2 4.2";
 
 let latestResult = null;
+
+function applyTheme(theme, savePreference = false) {
+  const isDark = theme === "dark";
+  document.documentElement.dataset.theme = isDark ? "dark" : "light";
+  themeToggle.setAttribute("aria-pressed", String(isDark));
+  themeToggle.setAttribute("aria-label", isDark ? "Switch to light mode" : "Switch to dark mode");
+  themeToggle.title = isDark ? "Switch to light mode" : "Switch to dark mode";
+  themeIconPath.setAttribute("d", isDark ? sunIconPath : moonIconPath);
+  if (themeColorMeta) themeColorMeta.content = isDark ? "#101411" : "#f6f7f3";
+
+  if (savePreference) {
+    try {
+      localStorage.setItem("fieldnote-theme", isDark ? "dark" : "light");
+    } catch {
+      // Theme switching still works when browser storage is unavailable.
+    }
+  }
+}
+
+applyTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+themeToggle.addEventListener("click", () => {
+  const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  applyTheme(nextTheme, true);
+});
 
 topicInput.addEventListener("input", () => {
   characterCount.textContent = String(topicInput.value.length);
@@ -118,7 +148,7 @@ document.querySelector("#new-research-button").addEventListener("click", () => {
 function setLoading(isLoading) {
   loadingState.hidden = !isLoading;
   submitButton.disabled = isLoading;
-  submitButton.querySelector("span").textContent = isLoading ? "Researching…" : "Research topic";
+  submitButton.querySelector("span").textContent = isLoading ? "Researching…" : "Generate report";
 }
 
 function showError(message) {
