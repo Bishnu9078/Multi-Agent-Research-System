@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: multi-agent-research-system
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn UI:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    maxShutdownDelaySeconds: 300
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+      - key: LLM_TEMPERATURE
+        value: "0"
+      - key: MAX_SEARCH_RESULTS
+        value: "3"
+      - key: MAX_SCRAPED_PAGES
+        value: "1"
+      - key: REQUEST_TIMEOUT
+        value: "8"

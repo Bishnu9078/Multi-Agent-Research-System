@@ -122,6 +122,12 @@ python -m uvicorn UI:app --reload
 
 Open <http://127.0.0.1:8000> in a browser. The interface sends research requests to `POST /api/research` and displays the returned report, sources, critic feedback, score, and warnings.
 
+### Deploy to Render
+
+The root `render.yaml` configures a free Python web service in Render's Singapore region. It installs `requirements.txt`, starts `UI:app` on Render's assigned port, and checks `/health` after startup.
+
+Create a new Blueprint from this Git repository and branch. Enter `GROQ_API_KEY` and `TAVILY_API_KEY` as secrets when Render prompts for them; never commit `.env` or API key values. The free web service sleeps after 15 minutes without traffic and can take about a minute to wake on the next request.
+
 ### Command-line research pipeline
 
 Pass a topic as a quoted argument:
