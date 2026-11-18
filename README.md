@@ -48,9 +48,9 @@ Configuration values available in `.env.example`:
 | `TAVILY_API_KEY` | Required | Tavily API key |
 | `GROQ_MODEL` | `openai/gpt-oss-120b` | Groq chat model |
 | `LLM_TEMPERATURE` | `0` | Model temperature; valid range is 0–2 |
-| `MAX_SEARCH_RESULTS` | `5` | Search result count; valid range is 1–10 |
-| `MAX_SCRAPED_PAGES` | `2` | Page count to read; valid range is 1–5 |
-| `REQUEST_TIMEOUT` | `15` | Page request timeout in seconds; must be greater than 0 |
+| `MAX_SEARCH_RESULTS` | `3` | Search result count; valid range is 1–10 |
+| `MAX_SCRAPED_PAGES` | `1` | Page count to read; valid range is 1–5 |
+| `REQUEST_TIMEOUT` | `8` | Page request timeout in seconds; must be greater than 0 |
 | `MAX_PAGE_BYTES` | `2000000` | Maximum HTML bytes fetched per page; must be greater than 0 |
 | `MAX_PAGE_CHARS` | `8000` | Maximum extracted text characters per page; must be greater than 0 |
 

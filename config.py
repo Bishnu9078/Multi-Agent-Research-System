@@ -19,9 +19,9 @@ class Settings:
     tavily_api_key: str = field(repr=False)
     model_name: str = "openai/gpt-oss-120b"
     temperature: float = 0.0
-    max_search_results: int = 5
-    max_scraped_pages: int = 2
-    request_timeout: float = 15.0
+    max_search_results: int = 3
+    max_scraped_pages: int = 1
+    request_timeout: float = 8.0
     max_page_bytes: int = 2_000_000
     max_page_chars: int = 8_000
 
@@ -48,9 +48,9 @@ class Settings:
                 tavily_api_key=os.environ["TAVILY_API_KEY"].strip(),
                 model_name=os.getenv("GROQ_MODEL", "openai/gpt-oss-120b").strip(),
                 temperature=float(os.getenv("LLM_TEMPERATURE", "0")),
-                max_search_results=int(os.getenv("MAX_SEARCH_RESULTS", "5")),
-                max_scraped_pages=int(os.getenv("MAX_SCRAPED_PAGES", "2")),
-                request_timeout=float(os.getenv("REQUEST_TIMEOUT", "15")),
+                max_search_results=int(os.getenv("MAX_SEARCH_RESULTS", "3")),
+                max_scraped_pages=int(os.getenv("MAX_SCRAPED_PAGES", "1")),
+                request_timeout=float(os.getenv("REQUEST_TIMEOUT", "8")),
                 max_page_bytes=int(os.getenv("MAX_PAGE_BYTES", "2000000")),
                 max_page_chars=int(os.getenv("MAX_PAGE_CHARS", "8000")),
             )
