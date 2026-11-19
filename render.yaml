@@ -7,7 +7,6 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn UI:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
-    maxShutdownDelaySeconds: 300
     envVars:
       - key: GROQ_API_KEY
         sync: false
