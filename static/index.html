@@ -19,8 +19,8 @@
         document.documentElement.dataset.theme = "light";
       }
     </script>
-    <link rel="stylesheet" href="/static/css/styles.css?v=brand-update-1" />
-    <script src="/static/js/app.js?v=dark-mode-2" defer></script>
+    <link rel="stylesheet" href="/static/css/styles.css?v=error-ui-1" />
+    <script src="/static/js/app.js?v=error-ui-1" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -111,9 +111,14 @@
 
         <div id="error-banner" class="error-banner" role="alert" hidden>
           <span class="message-icon" aria-hidden="true">!</span>
-          <div>
-            <strong>Research could not be completed</strong>
+          <div class="error-copy">
+            <strong id="error-title">Research could not be completed</strong>
             <p id="error-message"></p>
+            <p id="error-action" class="error-action" hidden></p>
+            <details id="error-technical-details" class="error-technical-details" hidden>
+              <summary>Technical details</summary>
+              <pre id="error-technical-message"></pre>
+            </details>
           </div>
         </div>
 

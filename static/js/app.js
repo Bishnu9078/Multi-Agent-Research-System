@@ -6,7 +6,11 @@ const characterCount = document.querySelector("#character-count");
 const submitButton = document.querySelector("#submit-button");
 const loadingState = document.querySelector("#loading-state");
 const errorBanner = document.querySelector("#error-banner");
+const errorTitle = document.querySelector("#error-title");
 const errorMessage = document.querySelector("#error-message");
+const errorAction = document.querySelector("#error-action");
+const errorTechnicalDetails = document.querySelector("#error-technical-details");
+const errorTechnicalMessage = document.querySelector("#error-technical-message");
 const resultsSection = document.querySelector("#results-section");
 const copyButton = document.querySelector("#copy-button");
 const downloadButton = document.querySelector("#download-button");
@@ -75,12 +79,19 @@ form.addEventListener("submit", async (event) => {
 
   hideError();
   if (!topic) {
-    showError("Enter a research topic to start.");
+    showError({
+      title: "Add a research topic",
+      message: "Enter a question or subject to start your research.",
+    });
     topicInput.focus();
     return;
   }
   if (topic.length > 500) {
-    showError("Keep the research topic to 500 characters or fewer.");
+    showError({
+      title: "Shorten your research topic",
+      message: "Your topic is longer than the 500-character limit.",
+      action: "Remove a few words, then try again.",
+    });
     topicInput.focus();
     return;
   }
@@ -91,22 +102,58 @@ form.addEventListener("submit", async (event) => {
   copyButton.disabled = true;
   downloadButton.disabled = true;
 
+  setLoading(true);
   try {
-    const response = await fetch("/api/research", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ topic }),
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(formatApiError(payload.detail) || `The server returned HTTP ${response.status}.`);
+    let response;
+    try {
+      response = await fetch("/api/research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ topic }),
+      });
+    } catch (error) {
+      showError({
+        title: "Couldn’t reach the research server",
+        message: "The request did not reach the server, so research could not start.",
+        action: "Check your connection and confirm the research app is running, then try again.",
+        technical: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+      });
+      return;
     }
-    renderResults(payload);
+
+    const parsed = await readApiResponse(response);
+    if (!response.ok) {
+      showError(describeApiFailure(response, parsed));
+      return;
+    }
+
+    if (parsed.error || !isRecord(parsed.payload) || typeof parsed.payload.report !== "string" || !parsed.payload.report.trim()) {
+      showError({
+        title: "The research server returned an incomplete result",
+        message: "The server responded, but the result was empty or in an unexpected format.",
+        action: "Try again. If this keeps happening, check the server logs.",
+        technical: formatResponseDetails(response, parsed),
+      });
+      return;
+    }
+
+    try {
+      renderResults(parsed.payload);
+    } catch (error) {
+      showError({
+        title: "We couldn’t display the research result",
+        message: "The server returned a result, but the browser could not render it.",
+        action: "Reload the page and try the research again.",
+        technical: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+      });
+    }
   } catch (error) {
-    const message = error instanceof TypeError
-      ? "Could not reach the local research server. Check that UI.py is running and try again."
-      : (error instanceof Error ? error.message : "An unexpected error occurred.");
-    showError(message);
+    showError({
+      title: "We couldn’t process the research response",
+      message: "Something unexpected happened while reading the server response.",
+      action: "Try again. If this keeps happening, check the server logs.",
+      technical: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+    });
   } finally {
     setLoading(false);
   }
@@ -117,8 +164,13 @@ copyButton.addEventListener("click", async () => {
   try {
     await navigator.clipboard.writeText(latestResult.report);
     setButtonLabel(copyButton, "Copied");
-  } catch {
-    showError("Clipboard access was unavailable. Select and copy the report text instead.");
+  } catch (error) {
+    showError({
+      title: "Couldn’t copy the report",
+      message: "Your browser did not allow clipboard access.",
+      action: "Select the report text and copy it manually.",
+      technical: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+    });
   }
 });
 
@@ -151,23 +203,156 @@ function setLoading(isLoading) {
   submitButton.querySelector("span").textContent = isLoading ? "Researching…" : "Generate report";
 }
 
-function showError(message) {
-  errorMessage.textContent = message;
+function showError(error) {
+  const details = typeof error === "string" ? { message: error } : (error || {});
+  errorTitle.textContent = details.title || "Research could not be completed";
+  errorMessage.textContent = details.message || "An unexpected error occurred.";
+  errorAction.textContent = details.action || "";
+  errorAction.hidden = !details.action;
+  errorTechnicalMessage.textContent = sanitizeTechnicalDetails(details.technical || "");
+  errorTechnicalDetails.hidden = !details.technical;
+  errorTechnicalDetails.open = false;
   errorBanner.hidden = false;
 }
 
 function hideError() {
   errorBanner.hidden = true;
+  errorTitle.textContent = "Research could not be completed";
   errorMessage.textContent = "";
+  errorAction.textContent = "";
+  errorAction.hidden = true;
+  errorTechnicalMessage.textContent = "";
+  errorTechnicalDetails.hidden = true;
+  errorTechnicalDetails.open = false;
 }
 
 function formatApiError(detail) {
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail)) {
-    return detail.map((item) => item && typeof item.msg === "string" ? item.msg : "Invalid request.").join(" ");
+    return detail.map((item) => {
+      if (!item || typeof item !== "object") return "Invalid request.";
+      const location = Array.isArray(item.loc) ? item.loc.filter((part) => part !== "body").join(" → ") : "";
+      const message = typeof item.msg === "string" ? item.msg : "Invalid request.";
+      return location ? `${location}: ${message}` : message;
+    }).join(" ");
   }
   if (detail && typeof detail.message === "string") return detail.message;
   return "";
+}
+
+async function readApiResponse(response) {
+  const contentType = response.headers.get("content-type") || "Not provided";
+  const text = await response.text();
+  if (!text.trim()) {
+    return { payload: null, error: "The response body was empty.", contentType, preview: "" };
+  }
+
+  try {
+    return { payload: JSON.parse(text), error: "", contentType, preview: "" };
+  } catch {
+    const isHtml = /text\/html/i.test(contentType) || /^\s*<!doctype html|^\s*<html/i.test(text);
+    const preview = isHtml
+      ? "HTML response body omitted."
+      : text.trim().slice(0, 400);
+    return { payload: null, error: "The response body was not valid JSON.", contentType, preview };
+  }
+}
+
+function describeApiFailure(response, parsed) {
+  const detail = formatApiError(parsed.payload && parsed.payload.detail).trim();
+  const normalizedDetail = detail.toLowerCase();
+  const technical = formatResponseDetails(response, parsed, detail);
+
+  if (response.status === 422) {
+    return {
+      title: "Check your research topic",
+      message: "The server could not accept this request.",
+      action: "Review the topic and try again.",
+      technical,
+    };
+  }
+  if (response.status === 503) {
+    return {
+      title: "The research service needs configuration",
+      message: "The server is missing a required setting or one of its settings is invalid.",
+      action: "Check the server environment settings, including the Groq and Tavily keys. Keep key values private.",
+      technical,
+    };
+  }
+  if (response.status === 502 && /no web results/.test(normalizedDetail)) {
+    return {
+      title: "No sources were found",
+      message: "The search service completed, but it did not return usable sources for this topic.",
+      action: "Try a broader topic or use different wording.",
+      technical,
+    };
+  }
+  if (response.status === 502 && (/search stage failed|could not retrieve web results/.test(normalizedDetail))) {
+    return {
+      title: "Web search couldn’t be completed",
+      message: "The research service could not retrieve search results.",
+      action: "Check the server’s Tavily access and network connection, then try again.",
+      technical,
+    };
+  }
+  if (response.status === 502 && /writer stage failed|could not generate the report/.test(normalizedDetail)) {
+    return {
+      title: "The report couldn’t be written",
+      message: "Search finished, but the AI service could not generate the report.",
+      action: "Try again shortly. If it repeats, check the model setting, provider status, and usage limits.",
+      technical,
+    };
+  }
+  if (response.status === 502 && /critic stage failed|could not review the report/.test(normalizedDetail)) {
+    return {
+      title: "The report review couldn’t be completed",
+      message: "The report was prepared, but the AI service could not finish its review.",
+      action: "Try again shortly. If it repeats, check the model setting, provider status, and usage limits.",
+      technical,
+    };
+  }
+  if (response.status === 429) {
+    return {
+      title: "The research service is busy",
+      message: "Too many requests were sent in a short time.",
+      action: "Wait a little and try again.",
+      technical,
+    };
+  }
+  if (response.status >= 500) {
+    return {
+      title: "Something went wrong on the server",
+      message: "The server could not complete this research request.",
+      action: "Try again. If the problem continues, check the server logs; unexpected server details may only be available there.",
+      technical,
+    };
+  }
+  return {
+    title: "The request couldn’t be completed",
+    message: "The research service rejected the request.",
+    action: "Review the technical details or try again.",
+    technical,
+  };
+}
+
+function formatResponseDetails(response, parsed, detail = "") {
+  const lines = [`HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ""}`];
+  lines.push(`Content-Type: ${parsed.contentType}`);
+  if (detail) lines.push(detail);
+  if (parsed.error) lines.push(parsed.error);
+  if (parsed.preview) lines.push(`Response preview: ${parsed.preview}`);
+  return lines.join("\n");
+}
+
+function sanitizeTechnicalDetails(value) {
+  return String(value)
+    .replace(/\bBearer\s+[^\s,;]+/gi, "Bearer [redacted]")
+    .replace(/\b(?:gsk_|tvly-)[A-Za-z0-9_-]{8,}\b/gi, "[redacted]")
+    .slice(0, 2400);
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function renderResults(result) {
